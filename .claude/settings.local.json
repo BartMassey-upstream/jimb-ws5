@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(cargo test)",
+      "Bash(cargo run:*)",
+      "Bash(cargo:*)",
+      "Bash(./target/debug/ws)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(time cargo run --release)"
+    ],
+    "deny": []
+  }
+}
