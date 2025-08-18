@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "Edit",
       "Bash(mkdir:*)",
       "Bash(cargo test)",
       "Bash(cargo run:*)",
@@ -11,7 +12,10 @@
       "Bash(git checkout:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(time cargo run --release)"
+      "Bash(time cargo run --release)",
+      "Bash(./zigzag_iterator)",
+      "Bash(rustc:*)",
+      "Bash(./debug_hv)"
     ],
     "deny": []
   }

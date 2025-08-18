@@ -21,7 +21,7 @@
 //! - **Fast pruning**: Bitwise operations to eliminate invalid paths early
 //! - **Cache friendly**: Linear memory access patterns in the search
 
-use std::path::PathBuf;
+use std::{path::PathBuf, env};
 
 use anyhow::Error;
 
@@ -33,6 +33,10 @@ use trie::{Node, letters_in};
 /// Loads a dictionary of 5-letter words, builds a trie, and then searches for all
 /// possible 5x5 word squares where both rows and columns form valid dictionary words.
 fn main() -> Result<(), Error> {
+    // Parse command line arguments
+    let args: Vec<String> = env::args().collect();
+    let json_output = args.contains(&"--json".to_string());
+
     // Load dictionary from the usa_5.txt file in the project directory
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("usa_5.txt");
@@ -45,13 +49,22 @@ fn main() -> Result<(), Error> {
         dict.insert(word);
     }
 
-    println!("dictionary contains {} words", dict.leaves);
+    if !json_output {
+        println!("dictionary contains {} words", dict.leaves);
+    }
 
     // Initialize empty 5x5 grid and start search
     let mut square = vec![Cell::dummy(&dict); 25];
+    let mut squares = Vec::new();
     let mut count = 0;
-    search_from(&mut square, 0, &dict, &mut count);
-    println!("Found {count} squares in total");
+    
+    search_from(&mut square, 0, &dict, &mut count, if json_output { Some(&mut squares) } else { None });
+    
+    if json_output {
+        println!("{}", serde_json::to_string(&squares)?);
+    } else {
+        println!("Found {count} squares in total");
+    }
 
     Ok(())
 }
@@ -82,18 +95,33 @@ fn search_from<'s, 'd: 's>(
     next: usize,
     root: &'d Node,
     count: &mut usize,
+    mut squares: Option<&mut Vec<Vec<String>>>,
 ) {
     // Base case: filled entire 5x5 grid
     if next == 25 {
         *count += 1;
-        // Print the completed word square
-        for row in 0..5 {
-            for col in 0..5 {
-                print!("{} ", square[row * 5 + col].letter);
+        
+        if let Some(squares_vec) = squares {
+            // JSON output: collect the square as a vector of strings
+            let mut square_words = Vec::new();
+            for row in 0..5 {
+                let mut word = String::new();
+                for col in 0..5 {
+                    word.push(square[row * 5 + col].letter.to_ascii_lowercase());
+                }
+                square_words.push(word);
             }
-            println!()
+            squares_vec.push(square_words);
+        } else {
+            // Text output: print the completed word square
+            for row in 0..5 {
+                for col in 0..5 {
+                    print!("{}", square[row * 5 + col].letter.to_ascii_lowercase());
+                }
+                println!()
+            }
+            println!();
         }
-        println!();
         return;
     }
 
@@ -128,7 +156,7 @@ fn search_from<'s, 'd: 's>(
             right: left.follow(letter).unwrap(),
         };
         // Recurse to fill the next position
-        search_from(square, next + 1, root, count);
+        search_from(square, next + 1, root, count, squares.as_deref_mut());
     }
 }
 
